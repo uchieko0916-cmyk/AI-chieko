@@ -7,6 +7,7 @@ export default defineConfig({
     exclude: ['@mediapipe/pose', '@mediapipe/camera_utils', '@mediapipe/drawing_utils'],
   },
   server: {
+    allowedHosts: 'all',
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',
