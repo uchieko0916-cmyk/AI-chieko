@@ -47,7 +47,7 @@ export default function ShareButtons({ twitterUrl, lineUrl, shareText, certDataU
   return (
     <div className="space-y-3">
       {/* Web Share API (mobile) */}
-      {typeof navigator !== 'undefined' && navigator.share && (
+      {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
         <button
           onClick={handleWebShare}
           className="w-full flex items-center justify-center gap-3 py-3 bg-gradient-to-r from-pink-400 to-purple-500 text-white font-bold rounded-2xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
