@@ -134,7 +134,7 @@ export default function TeacherSetup({ onVideoSet }: Props) {
             ) : (
               <div>
                 <div className="text-5xl mb-3">🎥</div>
-                <p className="font-bold text-purple-600 text-sm mb-1">
+                <p className="font-bold text-violet-600 text-sm mb-1">
                   クリックまたはドラッグ&ドロップ
                 </p>
                 <p className="text-xs text-gray-400">
@@ -162,8 +162,8 @@ export default function TeacherSetup({ onVideoSet }: Props) {
                 }}
                 className={`w-full text-left p-4 rounded-2xl border-2 transition-all duration-200 ${
                   selectedDemo === demo.id
-                    ? 'border-purple-400 bg-purple-50 shadow-md scale-[1.02]'
-                    : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                    ? 'border-violet-500 bg-violet-50 shadow-md scale-[1.02]'
+                    : 'border-gray-200 hover:border-violet-300 hover:bg-violet-50'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -173,7 +173,7 @@ export default function TeacherSetup({ onVideoSet }: Props) {
                     <p className="text-xs text-gray-400">{demo.description}</p>
                   </div>
                   {selectedDemo === demo.id && (
-                    <span className="ml-auto text-purple-500 text-xl">✓</span>
+                    <span className="ml-auto text-violet-600 text-xl font-black">✓</span>
                   )}
                 </div>
               </button>
@@ -196,7 +196,7 @@ export default function TeacherSetup({ onVideoSet }: Props) {
       </div>
 
       {/* Tips */}
-      <div className="card mt-6 bg-gradient-to-r from-pink-50 to-purple-50">
+      <div className="card mt-6" style={{ background: 'linear-gradient(135deg, #f5f3ff, #eef2ff)' }}>
         <h4 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
           <span>💡</span> 動画撮影のコツ
         </h4>
@@ -225,9 +225,10 @@ export default function TeacherSetup({ onVideoSet }: Props) {
         <button
           onClick={handleContinue}
           disabled={!isReady}
+          style={isReady ? { background: 'linear-gradient(135deg, #7c3aed, #4338ca)' } : {}}
           className={`text-lg px-10 py-4 rounded-full font-black shadow-xl transition-all duration-300 ${
             isReady
-              ? 'bg-gradient-to-r from-pink-400 to-purple-500 text-white hover:shadow-2xl hover:scale-105 pulse-ring'
+              ? 'text-white hover:shadow-2xl hover:scale-105 pulse-ring'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
         >

@@ -7,11 +7,25 @@ interface Props {
   studentVideoUrl: string;
   analysisResult: AnalysisResult | null;
   onAnalysisComplete: (result: AnalysisResult) => void;
-  onShowCertificate: (name: string) => void;
+  onShowCertificate: (name: string, frame: string) => void;
   onBack: () => void;
 }
 
 type Phase = 'preview' | 'analyzing' | 'result';
+
+function captureVideoFrame(video: HTMLVideoElement): string {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 360;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.85);
+  } catch {
+    return '';
+  }
+}
 
 export default function ScoreDisplay({
   teacherVideoUrl,
@@ -28,6 +42,7 @@ export default function ScoreDisplay({
   const [studentName, setStudentName] = useState('');
   const [showConfetti, setShowConfetti] = useState(false);
   const [nameError, setNameError] = useState('');
+  const [storedFrame, setStoredFrame] = useState('');
   const teacherVideoRef = useRef<HTMLVideoElement>(null);
   const studentVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -64,6 +79,12 @@ export default function ScoreDisplay({
   const startAnalysis = async () => {
     setPhase('analyzing');
     setProgress(0);
+
+    // Capture a frame from student video before analysis
+    if (studentVideoRef.current) {
+      const frame = captureVideoFrame(studentVideoRef.current);
+      if (frame) setStoredFrame(frame);
+    }
 
     let msgIdx = 0;
     setProgressMessage(PROGRESS_MESSAGES[0]);
@@ -107,12 +128,18 @@ export default function ScoreDisplay({
       return;
     }
     setNameError('');
-    onShowCertificate(studentName.trim());
+
+    // Try to capture a fresh frame if we don't have one yet
+    let frame = storedFrame;
+    if (!frame && studentVideoRef.current) {
+      frame = captureVideoFrame(studentVideoRef.current);
+    }
+    onShowCertificate(studentName.trim(), frame);
   };
 
   const scoreBarColor = (score: number) => {
-    if (score >= 80) return 'from-green-400 to-emerald-400';
-    if (score >= 60) return 'from-yellow-400 to-amber-400';
+    if (score >= 80) return 'from-emerald-400 to-teal-500';
+    if (score >= 60) return 'from-amber-400 to-yellow-500';
     if (score >= 40) return 'from-orange-400 to-red-400';
     return 'from-red-400 to-rose-500';
   };
@@ -134,7 +161,7 @@ export default function ScoreDisplay({
         <p className="text-gray-500 text-sm">
           {phase === 'preview' && '動画を確認してから採点を開始してください'}
           {phase === 'analyzing' && 'しばらくお待ちください...'}
-          {phase === 'result' && 'お疲れ様でした！あなたのダンスの採点結果です'}
+          {phase === 'result' && 'お疲れ様でした！あなたのダンスの採点結果です🌟'}
         </p>
       </div>
 
@@ -142,7 +169,7 @@ export default function ScoreDisplay({
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <div className="card">
           <div className="flex items-center gap-2 mb-2">
-            <span>🎬</span>
+            <span className="text-violet-600">🎬</span>
             <span className="font-bold text-sm text-gray-700">先生</span>
           </div>
           <video
@@ -155,7 +182,7 @@ export default function ScoreDisplay({
             playsInline
           />
         </div>
-        <div className="card">
+        <div className="card border-2 border-violet-200">
           <div className="flex items-center gap-2 mb-2">
             <span>💃</span>
             <span className="font-bold text-sm text-gray-700">あなた</span>
@@ -175,12 +202,12 @@ export default function ScoreDisplay({
       {/* Analyzing phase */}
       {phase === 'analyzing' && (
         <div className="card text-center animate-fade-in">
-          <div className="text-5xl mb-4 animate-spin-slow inline-block">⚙️</div>
-          <p className="font-bold text-purple-600 mb-4 text-lg">{progressMessage}</p>
-          <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+          <div className="text-5xl mb-4 inline-block">⚙️</div>
+          <p className="font-bold text-violet-600 mb-4 text-lg">{progressMessage}</p>
+          <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-pink-400 to-purple-500 rounded-full transition-all duration-300 shimmer"
-              style={{ width: `${progress}%` }}
+              className="h-full rounded-full transition-all duration-300 shimmer"
+              style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #7c3aed, #4338ca)' }}
             />
           </div>
           <p className="text-sm text-gray-400 mt-2">{Math.round(progress)}%</p>
@@ -188,7 +215,7 @@ export default function ScoreDisplay({
             {['🎵', '💃', '🤸', '✨', '⭐'].map((emoji, i) => (
               <span
                 key={i}
-                className="text-2xl animate-bounce-slow"
+                className="text-2xl animate-bounce"
                 style={{ animationDelay: `${i * 0.15}s` }}
               >
                 {emoji}
@@ -201,18 +228,20 @@ export default function ScoreDisplay({
       {/* Preview phase - start button */}
       {phase === 'preview' && (
         <div className="text-center">
-          <div className="card mb-6 bg-gradient-to-r from-pink-50 to-purple-50">
-            <h4 className="font-bold text-gray-700 mb-4">採点の仕組み</h4>
+          <div className="card mb-6" style={{ background: 'linear-gradient(135deg, #f5f3ff, #eef2ff)' }}>
+            <h4 className="font-bold text-gray-700 mb-4 flex items-center justify-center gap-2">
+              <span>⭐</span>採点の仕組み
+            </h4>
             <div className="grid grid-cols-3 gap-4 text-center">
               {[
                 { label: 'タイミング', weight: '30%', emoji: '🎵' },
                 { label: 'ポーズ精度', weight: '40%', emoji: '💃' },
                 { label: 'スムーズさ', weight: '30%', emoji: '✨' },
               ].map((item) => (
-                <div key={item.label}>
+                <div key={item.label} className="bg-white rounded-2xl p-3 shadow-sm">
                   <div className="text-2xl mb-1">{item.emoji}</div>
                   <div className="font-bold text-sm text-gray-700">{item.label}</div>
-                  <div className="text-xs text-purple-500 font-bold">{item.weight}</div>
+                  <div className="text-xs text-violet-600 font-black">{item.weight}</div>
                 </div>
               ))}
             </div>
@@ -224,7 +253,8 @@ export default function ScoreDisplay({
             </button>
             <button
               onClick={startAnalysis}
-              className="text-lg px-10 py-4 rounded-full font-black bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 pulse-ring"
+              className="text-lg px-10 py-4 rounded-full font-black text-white shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 pulse-ring"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #4338ca)' }}
             >
               🤖 AI採点スタート！
             </button>
@@ -234,31 +264,38 @@ export default function ScoreDisplay({
 
       {/* Result phase */}
       {phase === 'result' && analysisResult && (
-        <div className="animate-slide-up space-y-6">
+        <div className="space-y-6">
           {/* Total score & Grade */}
-          <div className="card text-center bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50">
+          <div className="card text-center" style={{ background: 'linear-gradient(135deg, #1e1b4b, #4c1d95)', color: 'white' }}>
             <div className="flex items-center justify-center gap-6 mb-4 flex-wrap">
-              <div className={`grade-badge bg-gradient-to-br ${getGradeColor(analysisResult.grade)} text-white`}>
+              <div className={`grade-badge bg-gradient-to-br ${getGradeColor(analysisResult.grade)} text-white shadow-2xl`}>
                 {analysisResult.grade}
               </div>
               <div>
-                <div className="text-7xl font-black gradient-text leading-none">
+                <div className="text-7xl font-black leading-none text-yellow-300">
                   {displayedScores.total}
                 </div>
-                <div className="text-gray-500 text-sm font-bold">/ 100点</div>
+                <div className="text-violet-300 text-sm font-bold">/ 100点</div>
               </div>
               <div className="text-5xl float-anim">
                 {getGradeEmoji(analysisResult.grade)}
               </div>
             </div>
-            <p className="text-xl font-black text-gray-700">
+            <p className="text-xl font-black text-white">
               {getGradeMessage(analysisResult.grade)}
             </p>
+            <div className="flex justify-center gap-1 mt-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <span key={i} className={`text-lg ${i < Math.ceil(analysisResult.totalScore / 20) ? 'text-yellow-300' : 'text-violet-700'}`}>★</span>
+              ))}
+            </div>
           </div>
 
           {/* Score breakdown */}
           <div className="card">
-            <h3 className="font-bold text-gray-700 mb-4 text-lg">スコア詳細</h3>
+            <h3 className="font-bold text-gray-700 mb-4 text-lg flex items-center gap-2">
+              <span>📊</span>スコア詳細
+            </h3>
             <div className="space-y-4">
               {[
                 { label: 'タイミング', emoji: '🎵', score: displayedScores.timing, actual: analysisResult.timingScore, weight: '30%' },
@@ -272,7 +309,7 @@ export default function ScoreDisplay({
                       <span className="font-bold text-sm text-gray-700">{item.label}</span>
                       <span className="text-xs text-gray-400">({item.weight})</span>
                     </div>
-                    <span className="font-black text-lg text-gray-700">
+                    <span className="font-black text-lg text-violet-700">
                       {item.score}<span className="text-sm text-gray-400">点</span>
                     </span>
                   </div>
@@ -288,7 +325,7 @@ export default function ScoreDisplay({
           </div>
 
           {/* Feedback */}
-          <div className="card bg-gradient-to-br from-yellow-50 to-orange-50">
+          <div className="card" style={{ background: 'linear-gradient(135deg, #fefce8, #fef9c3)' }}>
             <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
               <span>💬</span> AIからのフィードバック
             </h3>
@@ -296,9 +333,9 @@ export default function ScoreDisplay({
               {analysisResult.feedback.map((msg, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2 text-sm text-gray-600 bg-white bg-opacity-60 rounded-xl p-3"
+                  className="flex items-start gap-2 text-sm text-gray-600 bg-white bg-opacity-70 rounded-xl p-3"
                 >
-                  <span className="mt-0.5 flex-shrink-0">→</span>
+                  <span className="mt-0.5 flex-shrink-0 text-violet-500">→</span>
                   <span>{msg}</span>
                 </li>
               ))}
@@ -306,12 +343,12 @@ export default function ScoreDisplay({
           </div>
 
           {/* Certificate section */}
-          <div className="card bg-gradient-to-br from-purple-50 to-pink-50">
-            <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
+          <div className="card border-2 border-violet-300" style={{ background: 'linear-gradient(135deg, #f5f3ff, #eef2ff)' }}>
+            <h3 className="font-bold text-violet-800 mb-3 flex items-center gap-2 text-lg">
               <span>🏆</span> 修了証を作成する
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              あなたのお名前を入力して、かわいい修了証を発行しましょう！
+              お名前を入力して、かわいい修了証を発行しましょう！SNSでシェアしてね🌟
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
@@ -323,7 +360,7 @@ export default function ScoreDisplay({
                     setNameError('');
                   }}
                   placeholder="お名前を入力（例：田中さくら）"
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-purple-200 font-bold text-gray-700 placeholder-gray-300 focus:border-purple-400 transition-colors"
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-violet-200 font-bold text-gray-700 placeholder-gray-300 focus:border-violet-500 transition-colors bg-white"
                   maxLength={20}
                   onKeyDown={(e) => e.key === 'Enter' && handleShowCertificate()}
                 />
