@@ -8,22 +8,30 @@ interface Props {
   onBack: () => void;
 }
 
+interface ConfettiPiece {
+  x: number;
+  y: number;
+  color: string;
+  size: number;
+  duration: number;
+  delay: number;
+}
+
 export default function Certificate({ result, studentName, onRestart, onBack }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageUrl, setImageUrl] = useState('');
-  const [confetti, setConfetti] = useState<Array<{ x: number; y: number; color: string; size: number; speed: number; angle: number }>>([]);
-  const animRef = useRef<number>(0);
+  const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
 
   // Generate confetti
   useEffect(() => {
     const colors = ['#f472b6', '#a78bfa', '#60a5fa', '#34d399', '#fbbf24', '#fb923c'];
-    const pieces = Array.from({ length: 50 }, () => ({
+    const pieces: ConfettiPiece[] = Array.from({ length: 50 }, () => ({
       x: Math.random() * window.innerWidth,
       y: -20 - Math.random() * 100,
       color: colors[Math.floor(Math.random() * colors.length)],
       size: 6 + Math.random() * 8,
-      speed: 2 + Math.random() * 3,
-      angle: Math.random() * 360,
+      duration: 2 + Math.random() * 3,
+      delay: Math.random() * 2,
     }));
     setConfetti(pieces);
   }, []);
@@ -61,7 +69,7 @@ export default function Certificate({ result, studentName, onRestart, onBack }: 
     ctx.stroke();
 
     // Corner decorations
-    const corners = [[40, 40], [W - 40, 40], [40, H - 40], [W - 40, H - 40]];
+    const corners: [number, number][] = [[40, 40], [W - 40, 40], [40, H - 40], [W - 40, H - 40]];
     corners.forEach(([x, y]) => {
       ctx.font = '28px serif';
       ctx.textAlign = 'center';
@@ -235,7 +243,7 @@ export default function Certificate({ result, studentName, onRestart, onBack }: 
 
   return (
     <div className="space-y-8">
-      {/* Confetti */}
+      {/* CSS confetti using divs */}
       {confetti.map((c, i) => (
         <div
           key={i}
@@ -245,8 +253,8 @@ export default function Certificate({ result, studentName, onRestart, onBack }: 
             backgroundColor: c.color,
             width: `${c.size}px`,
             height: `${c.size}px`,
-            animationDuration: `${3 + Math.random() * 2}s`,
-            animationDelay: `${Math.random() * 2}s`,
+            animationDuration: `${c.duration}s`,
+            animationDelay: `${c.delay}s`,
           }}
         />
       ))}
@@ -268,15 +276,21 @@ export default function Certificate({ result, studentName, onRestart, onBack }: 
             className="w-full rounded-2xl shadow-inner"
           />
         )}
+        {!imageUrl && (
+          <div className="flex items-center justify-center h-48 bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl">
+            <p className="text-gray-400 font-bold">🎨 修了証を作成中...</p>
+          </div>
+        )}
       </div>
 
       {/* Share buttons */}
       <div className="card">
-        <h3 className="font-bold text-gray-700 mb-4 text-center text-lg">シェアして自慢しよう！</h3>
+        <h3 className="font-bold text-gray-700 mb-4 text-center text-lg">シェアして自慢しよう！🎉</h3>
         <div className="grid sm:grid-cols-3 gap-3">
           <button
             onClick={handleDownload}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-green-400 to-teal-400 text-white font-bold rounded-2xl shadow-md hover:shadow-lg hover:scale-105 transition-all"
+            disabled={!imageUrl}
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-green-400 to-teal-400 text-white font-bold rounded-2xl shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span>⬇️</span>
             <span>ダウンロード</span>
@@ -285,7 +299,7 @@ export default function Certificate({ result, studentName, onRestart, onBack }: 
             onClick={handleTwitterShare}
             className="flex items-center justify-center gap-2 px-4 py-3 bg-black text-white font-bold rounded-2xl shadow-md hover:shadow-lg hover:scale-105 transition-all"
           >
-            <span className="text-lg">𝕏</span>
+            <span className="font-bold text-lg">𝕏</span>
             <span>X（Twitter）</span>
           </button>
           <button
@@ -300,14 +314,14 @@ export default function Certificate({ result, studentName, onRestart, onBack }: 
 
       {/* Score summary */}
       <div className="card bg-gradient-to-r from-pink-50 to-purple-50 text-center">
-        <div className="flex items-center justify-center gap-4 mb-4">
+        <div className="flex items-center justify-center gap-4 mb-4 flex-wrap">
           <span className="text-5xl">{getGradeEmoji(result.grade)}</span>
           <div>
             <p className="text-4xl font-black text-gray-800">{result.totalScore}点</p>
             <p className="text-purple-600 font-bold">ランク {result.grade} - {getGradeMessage(result.grade)}</p>
           </div>
         </div>
-        <div className="flex justify-center gap-6 text-sm text-gray-500">
+        <div className="flex justify-center gap-6 text-sm text-gray-500 flex-wrap">
           <span>🎵 タイミング {result.timingScore}点</span>
           <span>💃 ポーズ {result.poseAccuracyScore}点</span>
           <span>🌊 スムーズ {result.smoothnessScore}点</span>
