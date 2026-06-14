@@ -68,51 +68,57 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="sticky top-0 z-50 shadow-md" style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #4c1d95 100%)' }}>
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      {/* Header — EVOKE スタイル（白ベース） */}
+      <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <span className="text-2xl float-anim">🎀</span>
-            <div>
-              <div className="flex items-center gap-1">
-                <span className="text-white font-black text-base tracking-wide" style={{ fontStyle: 'italic' }}>EVOKE</span>
-                <span className="text-violet-300 text-xs font-bold">for kids</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-xl">🎀</span>
+            <div className="leading-none">
+              <div className="flex items-baseline gap-1">
+                <span className="font-black text-base tracking-wide text-indigo-950" style={{ fontStyle: 'italic' }}>EVOKE</span>
+                <span className="text-indigo-400 text-xs font-bold">for kids</span>
               </div>
-              <p className="text-violet-300 text-xs font-bold tracking-wider">AI ダンス採点</p>
+              <span className="text-indigo-300 text-[10px] font-bold tracking-widest">AI DANCE</span>
             </div>
           </div>
 
           {/* Step indicator */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 overflow-x-auto">
             {STEPS.map((s, i) => (
               <React.Fragment key={s.key}>
                 <button
                   onClick={() => handleStepClick(s.key)}
-                  className={`flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 ${
+                  className={`flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 ${
                     s.key === step
-                      ? 'bg-white text-violet-700 shadow-md scale-105'
+                      ? 'text-white shadow-md scale-105'
                       : i < stepIndex
-                      ? 'bg-violet-700 text-violet-100 cursor-pointer hover:bg-violet-600'
-                      : 'bg-violet-900 text-violet-500 cursor-not-allowed'
+                      ? 'bg-indigo-50 text-indigo-600 cursor-pointer hover:bg-indigo-100'
+                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   }`}
+                  style={s.key === step ? { background: 'linear-gradient(135deg, #4338ca, #7c3aed)' } : {}}
                 >
                   <span>{s.emoji}</span>
-                  <span className="hidden md:inline">{s.label}</span>
+                  <span className="hidden sm:inline">{s.label}</span>
                 </button>
                 {i < STEPS.length - 1 && (
-                  <span className={`text-xs mx-0.5 ${i < stepIndex ? 'text-violet-300' : 'text-violet-700'}`}>›</span>
+                  <span className={`text-xs ${i < stepIndex ? 'text-indigo-300' : 'text-gray-200'}`}>›</span>
                 )}
               </React.Fragment>
             ))}
           </div>
-        </div>
 
-        {/* Star decoration bar */}
-        <div className="flex justify-center gap-3 pb-1.5 text-xs text-yellow-300 opacity-70">
-          {'★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★ ☆ ★'.split(' ').map((star, i) => (
-            <span key={i}>{star}</span>
-          ))}
+          {/* CTA button */}
+          <a
+            href="https://v0-cheer-dance-school-ui.vercel.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full border-2 border-indigo-900 text-indigo-900 text-xs font-black hover:bg-indigo-900 hover:text-white transition-all shrink-0"
+          >
+            <span>📅</span>
+            <span>体験予約</span>
+          </a>
         </div>
       </header>
 
