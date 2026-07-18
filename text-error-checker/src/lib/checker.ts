@@ -1,14 +1,30 @@
-import type { ExtractedDocument, Finding, Rule } from '../types'
-import { allPatternRules, checkNotationConsistency, checkWidthConsistency } from '../rules'
+import type { ExtractedDocument, Finding, StoredRule } from '../types'
+import { escapeRegExp } from '../rules/helpers'
+import { checkNotationConsistency, checkWidthConsistency } from '../rules'
+import { getRules, getVariantGroups } from './ruleStore'
 
 const CONTEXT_LENGTH = 15
 
-function runPatternRule(rule: Rule, doc: ExtractedDocument): Finding[] {
+function buildPattern(rule: StoredRule): RegExp | null {
+  try {
+    const source = rule.matchType === 'literal' ? escapeRegExp(rule.pattern) : rule.pattern
+    const baseFlags = rule.matchType === 'literal' ? '' : rule.flags ?? ''
+    const flags = baseFlags.includes('g') ? baseFlags : `${baseFlags}g`
+    return new RegExp(source, flags)
+  } catch {
+    // an admin-edited regex may be invalid; skip it rather than crash the whole check
+    return null
+  }
+}
+
+function runRule(rule: StoredRule, doc: ExtractedDocument): Finding[] {
+  const pattern = buildPattern(rule)
+  if (!pattern) return []
+
   const findings: Finding[] = []
-  const flags = rule.pattern.flags.includes('g') ? rule.pattern.flags : `${rule.pattern.flags}g`
 
   for (const segment of doc.segments) {
-    const re = new RegExp(rule.pattern.source, flags)
+    const re = new RegExp(pattern.source, pattern.flags)
     let match: RegExpExecArray | null
 
     while ((match = re.exec(segment.text)) !== null) {
@@ -28,7 +44,7 @@ function runPatternRule(rule: Rule, doc: ExtractedDocument): Finding[] {
         segmentId: segment.id,
         segmentLabel: segment.label,
         matchedText: match[0],
-        suggestion: typeof rule.suggestion === 'function' ? rule.suggestion(match) : rule.suggestion,
+        suggestion: rule.suggestion,
         contextBefore: segment.text.slice(Math.max(0, start - CONTEXT_LENGTH), start),
         contextAfter: segment.text.slice(end, end + CONTEXT_LENGTH),
       })
@@ -39,11 +55,14 @@ function runPatternRule(rule: Rule, doc: ExtractedDocument): Finding[] {
 }
 
 export function checkDocument(doc: ExtractedDocument): Finding[] {
-  const findings: Finding[] = [
-    ...allPatternRules.flatMap((rule) => runPatternRule(rule, doc)),
-    ...checkNotationConsistency(doc),
+  const rules = getRules().filter((rule) => rule.enabled)
+  const groups = getVariantGroups()
+    .filter((group) => group.enabled)
+    .map((group) => group.words)
+
+  return [
+    ...rules.flatMap((rule) => runRule(rule, doc)),
+    ...checkNotationConsistency(doc, groups),
     ...checkWidthConsistency(doc),
   ]
-
-  return findings
 }

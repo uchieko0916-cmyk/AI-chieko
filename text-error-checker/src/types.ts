@@ -12,14 +12,31 @@ export interface ExtractedDocument {
 }
 
 export type Severity = 'error' | 'warning' | 'info'
+export type MatchType = 'literal' | 'regex'
 
-export interface Rule {
+/** A rule as persisted in localStorage / edited via the admin screen. */
+export interface StoredRule {
   id: string
   category: string
   description: string
-  pattern: RegExp
-  suggestion?: string | ((match: RegExpExecArray) => string)
+  matchType: MatchType
+  /** literal text to match, or a regular expression source string */
+  pattern: string
+  /** regex flags (only meaningful when matchType === 'regex') */
+  flags?: string
+  suggestion?: string
   severity: Severity
+  enabled: boolean
+  /** true for rules shipped as defaults, false for admin-added ones */
+  isBuiltIn: boolean
+}
+
+/** A set of words/phrases that mean the same thing but are written differently. */
+export interface VariantGroup {
+  id: string
+  words: string[]
+  enabled: boolean
+  isBuiltIn: boolean
 }
 
 export interface Finding {

@@ -1,22 +1,6 @@
 import type { ExtractedDocument, Finding } from '../types'
 import { escapeRegExp } from './helpers'
 
-/** 表記ゆれチェック対象のグループ（同じ意味で複数の書き方があるもの） */
-const VARIANT_GROUPS: string[][] = [
-  ['子供', '子ども', 'こども'],
-  ['問い合わせ', '問合せ', 'お問い合わせ'],
-  ['申し込み', '申込み', '申込'],
-  ['取り組み', '取組み', '取組'],
-  ['打ち合わせ', '打ち合せ', '打合せ'],
-  ['ユーザー', 'ユーザ'],
-  ['サーバー', 'サーバ'],
-  ['コンピューター', 'コンピュータ'],
-  ['プリンター', 'プリンタ'],
-  ['出来る', 'できる'],
-  ['下さい', 'ください'],
-  ['頂く', 'いただく'],
-]
-
 function findFirstOccurrence(doc: ExtractedDocument, needle: string) {
   for (const segment of doc.segments) {
     const index = segment.text.indexOf(needle)
@@ -34,10 +18,10 @@ function countOccurrences(doc: ExtractedDocument, needle: string): number {
   return count
 }
 
-export function checkNotationConsistency(doc: ExtractedDocument): Finding[] {
+export function checkNotationConsistency(doc: ExtractedDocument, groups: string[][]): Finding[] {
   const findings: Finding[] = []
 
-  for (const group of VARIANT_GROUPS) {
+  for (const group of groups) {
     const counts = group.map((variant) => ({ variant, count: countOccurrences(doc, variant) }))
     const used = counts.filter((c) => c.count > 0)
     if (used.length < 2) continue

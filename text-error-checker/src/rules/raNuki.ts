@@ -1,4 +1,4 @@
-import type { Rule } from '../types'
+import type { StoredRule } from '../types'
 import { literalRule } from './helpers'
 
 /** ら抜き言葉（「られる」の「ら」が抜けた表現） */
@@ -24,7 +24,7 @@ const PAIRS: [wrong: string, right: string][] = [
   ['閉めれる', '閉められる'],
 ]
 
-export const raNukiRules: Rule[] = PAIRS.map(([wrong, right], i) =>
+export const raNukiRules: StoredRule[] = PAIRS.map(([wrong, right], i) =>
   literalRule(
     `ra-nuki-${i + 1}`,
     'ら抜き言葉',

@@ -1,4 +1,4 @@
-import type { Rule } from '../types'
+import type { StoredRule } from '../types'
 import { literalRule } from './helpers'
 
 /** 二重表現（同じ意味を重ねてしまっている表現） */
@@ -22,7 +22,7 @@ const PAIRS: [wrong: string, right: string][] = [
   ['内定が決まる', '内定する'],
 ]
 
-export const redundantExpressionRules: Rule[] = PAIRS.map(([wrong, right], i) =>
+export const redundantExpressionRules: StoredRule[] = PAIRS.map(([wrong, right], i) =>
   literalRule(
     `redundant-${i + 1}`,
     '二重表現',

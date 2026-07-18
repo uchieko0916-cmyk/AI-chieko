@@ -1,4 +1,4 @@
-import type { Rule } from '../types'
+import type { StoredRule } from '../types'
 import { literalRule } from './helpers'
 
 /** 二重敬語（敬語を重ねてしまっている表現） */
@@ -12,7 +12,7 @@ const PAIRS: [wrong: string, right: string][] = [
   ['お伺いさせていただく', '伺う'],
 ]
 
-export const doubleHonorificRules: Rule[] = PAIRS.map(([wrong, right], i) =>
+export const doubleHonorificRules: StoredRule[] = PAIRS.map(([wrong, right], i) =>
   literalRule(
     `double-honorific-${i + 1}`,
     '二重敬語',
