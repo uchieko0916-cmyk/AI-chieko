@@ -1,0 +1,5 @@
+node_modules
+dist
+.DS_Store
+# Copied from @ffmpeg/core by scripts/copy-ffmpeg-core.mjs (npm postinstall)
+public/ffmpeg
