@@ -51,8 +51,6 @@ export async function editVideo({
 
     await ffmpeg.writeFile(inputName, await fetchFile(file));
 
-    const args: string[] = ['-i', inputName];
-
     // Resolve the trim window: an explicit range wins over start/end trims.
     let start = 0;
     let end = durationSec;
@@ -64,10 +62,21 @@ export async function editVideo({
       if (ops.trimEndSec) end = Math.max(start, durationSec - ops.trimEndSec);
     }
     if (end <= start) end = durationSec;
+    const hasTrim = start > 0 || end < durationSec;
 
-    if (start > 0 || end < durationSec) {
-      args.push('-ss', start.toFixed(2), '-to', end.toFixed(2));
+    const args: string[] = [];
+    // -ss/-t placed *before* -i are input options: ffmpeg seeks to the
+    // nearest keyframe and decodes forward from there for just the
+    // requested duration, instead of decoding the whole file from the
+    // start — critical for cutting a short clip out of a long recording
+    // (e.g. pulling 5 minutes out of an hour-long meeting).
+    if (hasTrim && start > 0) {
+      args.push('-ss', start.toFixed(2));
     }
+    if (hasTrim) {
+      args.push('-t', (end - start).toFixed(2));
+    }
+    args.push('-i', inputName);
 
     let overlayUsed = false;
     if (ops.texts.length > 0) {
