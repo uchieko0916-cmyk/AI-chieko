@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #221f2b;
+  --color-ink-soft: #5b5568;
+  --color-paper: #ffffff;
+  --color-surface: #f6f4fa;
+  --color-surface-2: #efecf6;
+  --color-line: #e3e0ec;
+  --color-accent: #ff3e64;
+  --color-accent-soft: #ffe3e9;
+  --color-trust: #1d5fd1;
+  --color-trust-soft: #e4edff;
+  --color-sun: #e08a00;
+  --color-sun-soft: #fff3d2;
+  --color-mint: #1fae73;
+  --color-mint-soft: #e1f6ec;
+  --font-sans: var(--font-geist-sans), "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", Meiryo, system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+}

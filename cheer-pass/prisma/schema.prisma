@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  parent
+  admin
+}
+
+enum ReservationType {
+  trial
+  regular
+  makeup
+}
+
+enum ReservationStatus {
+  confirmed
+  cancelled
+}
+
+enum AttendanceStatus {
+  present
+  absent
+  pending
+}
+
+enum MakeupStatus {
+  available
+  used
+  expired
+}
+
+enum LessonStatus {
+  scheduled
+  cancelled
+}
+
+// 将来: lineUserId をキーに LINE Login のプロフィールと紐付ける想定。
+// 現在は passwordHash によるメール+パスワードの簡易ログインのみを使用。
+model User {
+  id           String   @id @default(cuid())
+  lineUserId   String?  @unique
+  name         String
+  email        String?  @unique
+  phone        String
+  passwordHash String
+  role         Role     @default(parent)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  children     Child[]
+  reservations Reservation[]
+}
+
+model Child {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classId   String?
+  class     Class?    @relation(fields: [classId], references: [id])
+  name      String
+  birthday  DateTime
+  grade     String?
+  note      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  reservations Reservation[]
+  makeups      Makeup[]
+}
+
+model Class {
+  id        String   @id @default(cuid())
+  name      String
+  teacher   String
+  location  String
+  capacity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lessons  Lesson[]
+  children Child[]
+}
+
+model Lesson {
+  id        String       @id @default(cuid())
+  classId   String
+  class     Class        @relation(fields: [classId], references: [id])
+  date      DateTime
+  startTime String
+  endTime   String
+  // null の場合は Class.capacity を採用
+  capacity  Int?
+  status    LessonStatus @default(scheduled)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  reservations Reservation[]
+  makeupsFrom  Makeup[]      @relation("SourceLesson")
+  makeupsTo    Makeup[]      @relation("TargetLesson")
+}
+
+model Reservation {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  childId   String
+  child     Child             @relation(fields: [childId], references: [id])
+  lessonId  String
+  lesson    Lesson            @relation(fields: [lessonId], references: [id])
+  type      ReservationType
+  status    ReservationStatus @default(confirmed)
+  note      String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  attendance Attendance?
+
+  @@index([lessonId])
+  @@index([userId])
+  @@index([childId])
+}
+
+model Attendance {
+  id            String           @id @default(cuid())
+  reservationId String           @unique
+  reservation   Reservation      @relation(fields: [reservationId], references: [id])
+  status        AttendanceStatus @default(pending)
+  absenceReason String?
+  recordedAt    DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+// 欠席が確定すると自動で 1 件発行される（status: available）。
+// 振替予約が確定すると targetLessonId が埋まり status: used になる。
+model Makeup {
+  id             String       @id @default(cuid())
+  childId        String
+  child          Child        @relation(fields: [childId], references: [id])
+  sourceLessonId String
+  sourceLesson   Lesson       @relation("SourceLesson", fields: [sourceLessonId], references: [id])
+  targetLessonId String?
+  targetLesson   Lesson?      @relation("TargetLesson", fields: [targetLessonId], references: [id])
+  status         MakeupStatus @default(available)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([childId])
+}
+
+model Notice {
+  id          String   @id @default(cuid())
+  title       String
+  body        String
+  important   Boolean  @default(false)
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
